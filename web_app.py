@@ -72,6 +72,78 @@ def clear_addresses():
     optimizer.clear_addresses()
     return jsonify({'success': True, 'addresses': [], 'count': 0})
 
+@app.route('/api/delete_address', methods=['POST'])
+def delete_address():
+    """Delete a specific address by index"""
+    global optimizer
+    
+    if not optimizer:
+        return jsonify({'success': False, 'error': 'API not configured'})
+    
+    data = request.get_json()
+    index = data.get('index')
+    
+    if index is None or index < 0 or index >= len(optimizer.addresses):
+        return jsonify({'success': False, 'error': 'Invalid address index'})
+    
+    # Remove the address at the specified index
+    deleted_address = optimizer.addresses.pop(index)
+    
+    # Clear route data since addresses changed
+    optimizer.route_data = None
+    
+    return jsonify({
+        'success': True,
+        'addresses': [addr['formatted'] for addr in optimizer.addresses],
+        'count': len(optimizer.addresses),
+        'deleted': deleted_address['formatted']
+    })
+
+@app.route('/api/search_addresses', methods=['POST'])
+def search_addresses():
+    """Search for address suggestions using Google Places API"""
+    global optimizer
+    
+    if not optimizer:
+        return jsonify({'success': False, 'error': 'API not configured'})
+    
+    data = request.get_json()
+    query = data.get('query', '').strip()
+    
+    if len(query) < 3:
+        return jsonify({'success': False, 'error': 'Query too short'})
+    
+    try:
+        # Use Google Places API for autocomplete
+        autocomplete_result = optimizer.gmaps.places_autocomplete(
+            input_text=query,
+            types=['address'],  # Focus on addresses
+            language='en'
+        )
+        
+        suggestions = []
+        for prediction in autocomplete_result[:5]:  # Limit to 5 suggestions
+            # Extract main text and secondary text
+            structured_formatting = prediction.get('structured_formatting', {})
+            main_text = structured_formatting.get('main_text', prediction['description'])
+            secondary_text = structured_formatting.get('secondary_text', '')
+            
+            suggestions.append({
+                'place_id': prediction['place_id'],
+                'description': prediction['description'],
+                'main_text': main_text,
+                'secondary_text': secondary_text
+            })
+        
+        return jsonify({
+            'success': True,
+            'suggestions': suggestions
+        })
+        
+    except Exception as e:
+        print(f"Error in address search: {str(e)}")
+        return jsonify({'success': False, 'error': 'Address search failed'})
+
 @app.route('/api/get_addresses', methods=['GET'])
 def get_addresses():
     """Get current list of addresses"""

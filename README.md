@@ -21,7 +21,7 @@ A comprehensive Python system that connects to the Google Maps API to calculate 
   - Maps JavaScript API
   - Directions API
   - Geocoding API
-  - Places API (optional)
+  - Places API (for autocomplete address suggestions)
 
 ## 🛠️ Installation
 
@@ -48,6 +48,7 @@ A comprehensive Python system that connects to the Google Maps API to calculate 
    - Maps JavaScript API
    - Directions API
    - Geocoding API
+   - Places API (for autocomplete suggestions)
 4. Create credentials (API key)
 5. Restrict the API key for security (optional but recommended)
 
